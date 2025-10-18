@@ -4,7 +4,7 @@
 ## Build
 ##
 
-FROM golang:1.16-buster AS build
+FROM golang:1.25-bookworm AS build
 
 WORKDIR /msh
 

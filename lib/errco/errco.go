@@ -128,7 +128,7 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 	case TYPE_SER:
 		typ = fmt.Sprintf("%s%-6s%s", COLOR_GRAY, string(logMod.Typ), COLOR_RESET)
 		ori = "\x00"
-		mex = fmt.Sprintf("%s%s%s", COLOR_GRAY, StringGraphic(fmt.Sprintf(logMod.Mex, logMod.Arg...)), COLOR_RESET) // first transform string to graphic then add coloring (fixes non-graphic bytes written on ms stdout)
+		mex = StringGraphic(fmt.Sprintf(logMod.Mex, logMod.Arg...)) // preserve original ANSI colors from minecraft server
 		cod = "\x00"
 	case TYPE_BYT:
 		typ = fmt.Sprintf("%s%-6s%s", COLOR_PURPLE, string(logMod.Typ), COLOR_RESET)

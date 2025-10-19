@@ -12,7 +12,7 @@ This repository ships a Pterodactyl egg that bundles Paper with the Mineplus pro
 
 - Downloads the requested Paper build (or the latest available build) from the PaperMC API.
 - Fetches the matching Mineplus proxy binary for your architecture from this fork’s releases.
-- Drops a default `mineplus-config.json` and writes a `log4j2.xml` that formats the Paper console as `[Mineplus] message`.
+- Drops a default `mineplus-config.json`, writes a `log4j2.xml` that formats the Paper console as `[Mineplus] message`, and creates an executable `mineplus-start.sh` launcher.
 - Keeps the familiar `server.properties` defaults from the upstream Paper egg.
 
 ## Runtime Behaviour
@@ -29,8 +29,8 @@ Most variables are hidden to keep the panel uncluttered. The important ones rema
 | --- | --- | --- |
 | `SERVER_JARFILE` | ✅ | Paper jar to launch (`server.jar` by default). |
 | `MINECRAFT_VERSION` / `BUILD_NUMBER` | ✅ | Paper release selection (blank = latest). |
-| `JAVA_FLAGS` | ✅ | Used only if Mineplus is bypassed. |
-| `AUTO_START_STOP` | ❌ | Hidden toggle that forces Java to run without Mineplus when set to `0`. |
+| `JAVA_FLAGS` | ✅ | Applied only when Mineplus is bypassed (direct Java mode). |
+| `AUTO_START_STOP` | ❌ | Hidden toggle that forces the launcher to choose Java directly (`0`) or the proxy (`1`). |
 | `IDLE_SECONDS` | ❌ | Hidden idle timeout (default `30`). |
 | `FORCE_STOP_AFTER` | ❌ | Hidden force-kill timeout (default `10`). |
 | `USE_PROCESS_SUSPEND` | ❌ | Hidden toggle to suspend the Paper process instead of stopping it. |

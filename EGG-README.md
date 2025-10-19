@@ -12,7 +12,7 @@ This repository ships a Pterodactyl egg that bundles Paper with the Mineplus pro
 
 - Downloads the requested Paper build (or the latest available build) from the PaperMC API.
 - Fetches the matching Mineplus proxy binary for your architecture from this fork’s releases.
-- Drops a default `mineplus-config.json`, writes a `log4j2.xml` that formats the Paper console as `[Mineplus] message`, and creates an executable `mineplus-start.sh` launcher.
+- Drops a default `mineplus-config.json`, writes a `log4j2.xml` that formats the Paper console as `[Mineplus] message`, and creates an executable `mineplus-start.sh` launcher (the startup command will regenerate it on boot if it ever goes missing).
 - Keeps the familiar `server.properties` defaults from the upstream Paper egg.
 
 ## Runtime Behaviour

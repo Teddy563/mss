@@ -75,7 +75,7 @@ The proxy looks for `mineplus-config.json`. The JSON structure mirrors the origi
 - JSON file: `egg-paper-mineplus-autostart.json`
 - Imports as **Mineplus Paper Autostart**
 - Hidden variables keep the idle timeout, suspend settings, and debug level locked. Change them in the JSON before importing if you need different defaults.
-- The installer downloads the corresponding Mineplus binary from the releases of this fork, generates a `log4j2.xml` that forces the `[Mineplus] %msg` pattern, and drops a `mineplus-start.sh` wrapper that decides whether to launch Java directly or the proxy.
+- The installer downloads the corresponding Mineplus binary from the releases of this fork, generates a `log4j2.xml` that forces the `[Mineplus] %msg` pattern, and drops a `mineplus-start.sh` wrapper that decides whether to launch Java directly or the proxy. The startup command re-creates the script automatically if it is missing, so existing servers stay compatible.
 
 Refer to [EGG-README.md](EGG-README.md) for the panel specific walkthrough.
 

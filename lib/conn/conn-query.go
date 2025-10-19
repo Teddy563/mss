@@ -38,16 +38,16 @@ type challengeLibrary struct {
 
 // HandlerQuery handles query stats requests.
 //
-// Accepts requests on config.MshHost, config.MshPortQuery
+// Accepts requests on config.ProxyHost, config.ProxyPortQuery
 func HandlerQuery() {
-	connCli, err := net.ListenPacket("udp", fmt.Sprintf("%s:%d", config.MshHost, config.MshPortQuery))
+	connCli, err := net.ListenPacket("udp", fmt.Sprintf("%s:%d", config.ProxyHost, config.ProxyPortQuery))
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_LISTEN, err.Error())
 		return
 	}
 
 	// infinite cycle to handle new clients queries
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "%-40s %10s:%5d ...", "listening for new clients queries on", config.MshHost, config.MshPortQuery)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "%-40s %10s:%5d ...", "listening for new clients queries on", config.ProxyHost, config.ProxyPortQuery)
 	for {
 		// handshake / stats request read
 		var buf []byte = make([]byte, 1024)
@@ -203,7 +203,7 @@ func statsGet(reqClient []byte) ([]byte, *errco.MshLog) {
 // statsRespBase writes a base stats response to client
 func statsRespBase(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
 	levelName, _ := config.ConfigRuntime.ParsePropertiesString("level-name")
-	mshPortSmallEndian := utility.Reverse(big.NewInt(int64(config.MshPort)).Bytes())
+	proxyPortSmallEndian := utility.Reverse(big.NewInt(int64(config.ProxyPort)).Bytes())
 	var motd string
 	switch {
 	case servstats.Stats.Status == errco.SERVER_STATUS_OFFLINE || servstats.Stats.Suspended:
@@ -224,7 +224,7 @@ func statsRespBase(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
 	buf.WriteString(fmt.Sprintf("%s\x00", levelName))                // map
 	buf.WriteString("0\x00")                                         // numplayers hardcoded
 	buf.WriteString("0\x00")                                         // maxplayers hardcoded
-	buf.Write(append(mshPortSmallEndian, byte(0)))                   // hostport
+	buf.Write(append(proxyPortSmallEndian, byte(0)))                   // hostport
 	buf.WriteString(fmt.Sprintf("%s\x00", utility.GetOutboundIP4())) // hostip
 
 	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "send stats base rsp:\t%v", buf.Bytes())
@@ -259,11 +259,11 @@ func statsRespFull(connCli net.PacketConn, addr net.Addr, sessionID []byte) {
 	buf.WriteString(fmt.Sprintf("gametype\x00%s\x00", "SMP"))      // hardcoded (default)
 	buf.WriteString(fmt.Sprintf("game_id\x00%s\x00", "MINECRAFT")) // hardcoded (default)
 	buf.WriteString(fmt.Sprintf("version\x00%s\x00", config.ConfigRuntime.Server.Version))
-	buf.WriteString(fmt.Sprintf("plugins\x00msh/%s: msh %s\x00", config.ConfigRuntime.Server.Version, progmgr.MshVersion)) // example: "plugins\x00{ServerVersion}: {Name} {Version}; {Name} {Version}\x00"
+	buf.WriteString(fmt.Sprintf("plugins\x00Mineplus/%s: Mineplus %s\x00", config.ConfigRuntime.Server.Version, progmgr.MshVersion)) // example: "plugins\x00{ServerVersion}: {Name} {Version}; {Name} {Version}\x00"
 	buf.WriteString(fmt.Sprintf("map\x00%s\x00", levelName))
 	buf.WriteString("numplayers\x000\x00") // hardcoded
 	buf.WriteString("maxplayers\x000\x00") // hardcoded
-	buf.WriteString(fmt.Sprintf("hostport\x00%d\x00", config.MshPort))
+	buf.WriteString(fmt.Sprintf("hostport\x00%d\x00", config.ProxyPort))
 	buf.WriteString(fmt.Sprintf("hostip\x00%s\x00", utility.GetOutboundIP4()))
 	buf.WriteByte(0) // termination of section (?)
 

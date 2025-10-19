@@ -20,7 +20,7 @@ type test struct {
 
 func Test_getReqType(t *testing.T) {
 	// set port which was used to get hardcoded test bytes
-	config.MshPort = 25555
+	config.ProxyPort = 25555
 
 	tests := []test{
 		{
@@ -144,7 +144,7 @@ func Test_getReqType(t *testing.T) {
 
 func Test_getPing(t *testing.T) {
 	// set port which was used to get hardcoded test bytes
-	config.MshPort = 25555
+	config.ProxyPort = 25555
 
 	tests := []test{
 		// positive cases

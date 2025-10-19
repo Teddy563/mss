@@ -137,7 +137,7 @@ func sgmMgr() {
 				errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "segment reset")
 				sgm.reset(res)
 			case 403:
-				errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_VERSION, "client is unauthorized, issuing msh termination")
+				errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_VERSION, "client is unauthorized, issuing Mineplus proxy termination")
 				AutoTerminate()
 			default:
 				body, err := io.ReadAll(res.Body)
@@ -161,38 +161,38 @@ func sgmMgr() {
 			switch resJson.Result {
 			case "dep": // local version deprecated
 				// don't check NotifyUpdate
-				verCheck := fmt.Sprintf("msh (%s) is deprecated: visit github to update to %s!", MshVersion, resJson.Official.V)
+				verCheck := fmt.Sprintf("Mineplus (%s) is deprecated: visit github to update to %s!", MshVersion, resJson.Official.V)
 				errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_VERSION, verCheck)
 				sgm.push.verCheck = verCheck
 
 				// override ConfigRuntime variables to display deprecated error message in motd
-				config.ConfigRuntime.Msh.InfoHibernation = "                   §fserver status:\n                   §b§lHIBERNATING\n                   §b§cmsh version DEPRECATED"
-				config.ConfigRuntime.Msh.InfoStarting = "                   §fserver status:\n                    §6§lWARMING UP\n                   §b§cmsh version DEPRECATED"
+				config.ConfigRuntime.Msh.InfoHibernation = "                   \u00a7fserver status:\n                   \u00a7b\u00a7lHIBERNATING\n                   \u00a7b\u00a7cMineplus version DEPRECATED"
+				config.ConfigRuntime.Msh.InfoStarting = "                   \u00a7fserver status:\n                    \u00a76\u00a7lWARMING UP\n                   \u00a7b\u00a7cMineplus version DEPRECATED"
 
 			case "upd": // local version to update
 				if config.ConfigRuntime.Msh.NotifyUpdate {
-					verCheck := fmt.Sprintf("msh (%s) can be updated: visit github to update to %s!", MshVersion, resJson.Official.V)
+					verCheck := fmt.Sprintf("Mineplus (%s) can be updated: visit github to update to %s!", MshVersion, resJson.Official.V)
 					errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_VERSION, verCheck)
 					sgm.push.verCheck = verCheck
 				}
 
 			case "off": // local version is official
 				if config.ConfigRuntime.Msh.NotifyUpdate {
-					verCheck := fmt.Sprintf("msh (%s) is updated", MshVersion)
+					verCheck := fmt.Sprintf("Mineplus (%s) is updated", MshVersion)
 					errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, verCheck)
 					sgm.push.verCheck = verCheck
 				}
 
 			case "dev": // local version is a developement version
 				if config.ConfigRuntime.Msh.NotifyUpdate {
-					verCheck := fmt.Sprintf("msh (%s) is running a dev release", MshVersion)
+					verCheck := fmt.Sprintf("Mineplus (%s) is running a dev release", MshVersion)
 					errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_VERSION, verCheck)
 					sgm.push.verCheck = verCheck
 				}
 
 			case "uno": // local version is unofficial
 				if config.ConfigRuntime.Msh.NotifyUpdate {
-					verCheck := fmt.Sprintf("msh (%s) is running an unofficial release", MshVersion)
+					verCheck := fmt.Sprintf("Mineplus (%s) is running an unofficial release", MshVersion)
 					errco.NewLogln(errco.TYPE_WAR, errco.LVL_0, errco.ERROR_VERSION, verCheck)
 					sgm.push.verCheck = verCheck
 				}

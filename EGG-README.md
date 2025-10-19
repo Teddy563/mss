@@ -1,115 +1,48 @@
-# Pterodactyl Egg for Minecraft Server Hibernation
+# Mineplus Paper Autostart Egg
 
-This is the official Pterodactyl egg for running Paper Minecraft servers with automatic hibernation using MSH (Minecraft Server Hibernation).
+This repository ships a Pterodactyl egg that bundles Paper with the Mineplus proxy wrapper. The proxy keeps the panel console clean, automatically starts the Paper server when a player connects, and stops it again when the server is idle.
 
-## 📥 Installation
+## Download & Import
 
-### Download Egg
-The egg is available in two locations:
-- **Repository Root**: `egg-paper-minecraft-hibernation.json`
-- **Releases Directory**: `releases/egg-paper-minecraft-hibernation.json`
-- **Direct Download**: [Latest Release on GitHub](https://github.com/Kartvya69/minecraft-server-hibernation/releases/latest)
+1. Download `egg-paper-mineplus-autostart.json` from the repository root (or from the latest release once available).
+2. In your Pterodactyl admin panel open **Nests → Import Egg** and upload the JSON file.
+3. Create a server using the new **Mineplus Paper Autostart** egg.
 
-### Upload to Pterodactyl
-1. Go to your Pterodactyl Panel **Admin Area**
-2. Navigate to **Nests** → **Minecraft** (or create a new nest)
-3. Click **Import Egg**
-4. Upload `egg-paper-minecraft-hibernation.json`
-5. Configure the egg settings as needed
+## What the Installer Does
 
-### Create Server
-1. Go to **Servers** → **Create New Server**
-2. Select the **Paper Minecraft Hibernation** egg
-3. Configure server settings (RAM, CPU, disk space)
-4. Click **Create Server**
+- Downloads the requested Paper build (or the latest available build) from the PaperMC API.
+- Fetches the matching Mineplus proxy binary for your architecture from this fork’s releases.
+- Drops a default `mineplus-config.json` and writes a `log4j2.xml` that formats the Paper console as `[Mineplus] message`.
+- Keeps the familiar `server.properties` defaults from the upstream Paper egg.
 
-## 🚀 Features
+## Runtime Behaviour
 
-### Automatic Hibernation
-- Server automatically hibernates when no players are online
-- Wakes up instantly when a player tries to join
-- Saves resources and reduces costs
+- `mineplus-proxy` listens on the allocation port exposed by Pterodactyl.
+- When a player pings or joins, Mineplus starts `java -jar server.jar`. If `AUTO_START_STOP` is disabled (hidden egg variable) the panel simply runs Java directly.
+- When the server stays empty for the configured idle timeout, Mineplus sends `/stop` (or suspends the process if suspend mode is enabled) and returns to standby.
 
-### Supported Java Versions
-- Java 21 (Minecraft 1.20.5+)
-- Java 17 (Minecraft 1.18+)
-- Java 16 (Minecraft 1.17)
-- Java 11 (Minecraft 1.16)
-- Java 8 (Minecraft <1.16)
-- J9 variants available for reduced RAM usage
+## Key Variables
 
-### Supported Architectures
-- x86_64 (amd64) - Most common
-- aarch64 (arm64) - ARM-based servers
+Most variables are hidden to keep the panel uncluttered. The important ones remain editable:
 
-## ⚙️ Configuration
+| Name | Visible | Purpose |
+| --- | --- | --- |
+| `SERVER_JARFILE` | ✅ | Paper jar to launch (`server.jar` by default). |
+| `MINECRAFT_VERSION` / `BUILD_NUMBER` | ✅ | Paper release selection (blank = latest). |
+| `JAVA_FLAGS` | ✅ | Used only if Mineplus is bypassed. |
+| `AUTO_START_STOP` | ❌ | Hidden toggle that forces Java to run without Mineplus when set to `0`. |
+| `IDLE_SECONDS` | ❌ | Hidden idle timeout (default `30`). |
+| `FORCE_STOP_AFTER` | ❌ | Hidden force-kill timeout (default `10`). |
+| `USE_PROCESS_SUSPEND` | ❌ | Hidden toggle to suspend the Paper process instead of stopping it. |
 
-### Server Variables
-The egg includes several configurable variables:
+All hidden variables can still be edited in the JSON before import if you need different defaults.
 
-#### Minecraft Settings
-- **Minecraft Version**: Paper version to install (e.g., `1.21.4`, `latest`)
-- **Server Jar File**: Name of the server JAR file (default: `server.jar`)
-- **Build Number**: Paper build number (default: `latest`)
+## Requirements
 
-#### MSH Settings
-- **Wait time for shutdown**: Time in seconds before hibernating (default: `120`)
-- **TimeToKill**: Force kill timeout if graceful shutdown fails (default: `30`)
-- **Debug Level**: Logging verbosity 1-3 (default: `2`)
-- **SuspendAllow**: Use process suspension instead of stop (default: `1`)
-- **SuspendRefresh**: Seconds between suspend refreshes (default: `30`)
-- **wlimport**: Only allow whitelisted players to start server (default: `0`)
+- Pterodactyl Panel v1.11+ (PTDL_v2 eggs).
+- Java 17+ image from `ghcr.io/pterodactyl/yolks` (already wired in the egg).
+- x86_64 or arm64 compute nodes (matching Mineplus binaries are provided by this fork).
 
-### Binary Download
-The egg **automatically downloads** the latest MSH binaries from:
-```
-https://github.com/Kartvya69/minecraft-server-hibernation/releases/latest/download/
-```
+## Support
 
-No configuration needed! The URL is hardcoded in the installation script.
-
-## 🔧 How It Works
-
-1. **Installation Phase**:
-   - Downloads Paper server JAR from PaperMC API
-   - Downloads MSH binary from GitHub releases
-   - Verifies binary integrity (ELF format check)
-   - Downloads default `server.properties` and `msh-config.json`
-
-2. **Runtime**:
-   - MSH acts as a proxy between players and the Minecraft server
-   - When a player connects, MSH starts the server
-   - After configured timeout with no players, server hibernates
-   - MSH continues listening for new connections
-
-## 🐛 Troubleshooting
-
-### Binary Download Fails
-If you see: `ERROR: Failed to download MSH binary`
-- Check your server has internet access
-- Verify GitHub releases are accessible: https://github.com/Kartvya69/minecraft-server-hibernation/releases
-- Check firewall rules allow HTTPS connections
-
-### Binary Verification Fails
-If you see: `ERROR: Downloaded file is not a valid ELF binary`
-- The downloaded file might be an error page
-- Check the error output showing first 200 bytes
-- Verify the release exists on GitHub
-
-### Server Won't Start
-1. Check Java version matches Minecraft version
-2. Review server logs in Pterodactyl console
-3. Verify `msh-config.json` is present and valid
-4. Check `msh_server.bin` has execute permissions
-
-## 📚 More Information
-
-- **Main Repository**: https://github.com/Kartvya69/minecraft-server-hibernation
-- **Original Project**: https://github.com/gekware/minecraft-server-hibernation
-- **Discord Support**: Join our [discord server](https://discord.com/invite/guKB6ETeMF)
-
-## 📝 License
-
-This egg configuration is based on the original work by [BolverBlitz](https://github.com/gekware/minecraft-server-hibernation-pterodactyl-egg) and modified for the Kartvya69 fork.
-
-MSH itself is licensed under the GPL-3.0 License.
+This egg and the Mineplus proxy are maintained in the `Teddy563/mss` fork. Please open GitHub issues in this repository for bug reports or feature requests.

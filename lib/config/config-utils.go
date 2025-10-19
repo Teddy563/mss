@@ -80,7 +80,7 @@ func (c *Configuration) IsWhitelist(reqPacket []byte, clientAddress string) *err
 
 	} else {
 		// msh config whitelist not enabled
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh config whitelist not enabled")
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "mineplus config whitelist not enabled")
 	}
 
 	if foundMatch {
@@ -88,7 +88,7 @@ func (c *Configuration) IsWhitelist(reqPacket []byte, clientAddress string) *err
 		return nil
 	} else {
 		// no match found
-		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_WHITELIST_CHECK, "msh config whitelist check failed")
+		return errco.NewLog(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_WHITELIST_CHECK, "mineplus config whitelist check failed")
 	}
 }
 

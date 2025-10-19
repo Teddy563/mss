@@ -84,7 +84,7 @@ func FreezeMS(force bool) *errco.MshLog {
 
 		if force {
 			// wait ms to go online
-			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "waiting for minecraft server to go online... (msh will stop it after)")
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "waiting for minecraft server to go online... (Mineplus proxy will stop it after)")
 			for servstats.Stats.Status == errco.SERVER_STATUS_STARTING {
 				time.Sleep(1 * time.Second)
 			}
@@ -95,7 +95,7 @@ func FreezeMS(force bool) *errco.MshLog {
 			}
 
 			// ms is now online
-			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "minecraft server is now online! (msh proceeds to stop it)")
+			errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "minecraft server is now online! (Mineplus proxy proceeds to stop it)")
 
 			// proceed to fallthrough
 

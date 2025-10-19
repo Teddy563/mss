@@ -34,7 +34,7 @@ func HandlerClientConn(clientConn net.Conn) {
 
 	// if there is a major error warn the client and return
 	if servstats.Stats.MajorError != nil {
-		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_MINECRAFT_SERVER, "a client connected to msh (%s:%d to %s:%d) but minecraft server has encountered major problems", clientAddress, config.MshPort, config.ServHost, config.ServPort)
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_MINECRAFT_SERVER, "a client connected to the proxy (%s:%d to %s:%d) but minecraft server has encountered major problems", clientAddress, config.ProxyPort, config.ServHost, config.ServPort)
 
 		// close the client connection before returning
 		defer func() {
@@ -42,12 +42,12 @@ func HandlerClientConn(clientConn net.Conn) {
 			clientConn.Close()
 		}()
 
-		// msh INFO/JOIN response (warn client with error description)
+		// proxy INFO/JOIN response (warn client with error description)
 		mes := buildMessage(reqType, fmt.Sprintf(servstats.Stats.MajorError.Mex, servstats.Stats.MajorError.Arg...))
 		clientConn.Write(mes)
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
-		// msh PING response if it was a client INFO request
+		// proxy PING response if it was a client INFO request
 		if reqType == errco.CLIENT_REQ_INFO {
 			logMsh = getPing(clientConn)
 			if logMsh != nil {
@@ -61,7 +61,7 @@ func HandlerClientConn(clientConn net.Conn) {
 	// handle the request depending on request type
 	switch reqType {
 	case errco.CLIENT_REQ_INFO:
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client requested server info from %s:%d to %s:%d", clientAddress, config.MshPort, config.ServHost, config.ServPort)
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client requested server info from %s:%d to %s:%d", clientAddress, config.ProxyPort, config.ServHost, config.ServPort)
 
 		if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE || servstats.Stats.Suspended {
 			// ms not online or suspended
@@ -72,7 +72,7 @@ func HandlerClientConn(clientConn net.Conn) {
 				clientConn.Close()
 			}()
 
-			// msh INFO response
+			// proxy INFO response
 			var mes []byte
 			switch servstats.Stats.Status {
 			case errco.SERVER_STATUS_OFFLINE:
@@ -85,9 +85,9 @@ func HandlerClientConn(clientConn net.Conn) {
 				mes = buildMessage(reqType, "server is stopping...\nrefresh the page")
 			}
 			clientConn.Write(mes)
-			errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+			errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
-			// msh PING response
+			// proxy PING response
 			logMsh := getPing(clientConn)
 			if logMsh != nil {
 				logMsh.Log(true)
@@ -102,7 +102,7 @@ func HandlerClientConn(clientConn net.Conn) {
 		}
 
 	case errco.CLIENT_REQ_JOIN:
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client tried to join from %s:%d to %s:%d", clientAddress, config.MshPort, config.ServHost, config.ServPort)
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "a client tried to join from %s:%d to %s:%d", clientAddress, config.ProxyPort, config.ServHost, config.ServPort)
 
 		if servstats.Stats.Status != errco.SERVER_STATUS_ONLINE {
 			// ms not online (un/suspended)
@@ -118,10 +118,10 @@ func HandlerClientConn(clientConn net.Conn) {
 			if logMsh != nil {
 				logMsh.Log(true)
 
-				// msh JOIN response (warn client with text in the loadscreen)
+				// proxy JOIN response (warn client with text in the loadscreen)
 				mes := buildMessage(reqType, "You don't have permission to warm this server")
 				clientConn.Write(mes)
-				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 				return
 			}
@@ -129,19 +129,19 @@ func HandlerClientConn(clientConn net.Conn) {
 			// issue warm
 			logMsh = servctrl.WarmMS()
 			if logMsh != nil {
-				// msh JOIN response (warn client with text in the loadscreen)
+				// proxy JOIN response (warn client with text in the loadscreen)
 				logMsh.Log(true)
-				mes := buildMessage(reqType, "An error occurred while warming the server: check the msh log")
+				mes := buildMessage(reqType, "An error occurred while warming the server: check the proxy log")
 				clientConn.Write(mes)
-				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 				return
 			}
 
-			// msh JOIN response (answer client with text in the loadscreen)
+			// proxy JOIN response (answer client with text in the loadscreen)
 			mes := buildMessage(reqType, "Server start command issued. Please wait... "+servstats.Stats.LoadProgress)
 			clientConn.Write(mes)
-			errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+			errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 		} else {
 			// ms online (un/suspended)
@@ -149,11 +149,11 @@ func HandlerClientConn(clientConn net.Conn) {
 			// issue warm
 			logMsh = servctrl.WarmMS()
 			if logMsh != nil {
-				// msh JOIN response (warn client with text in the loadscreen)
+				// proxy JOIN response (warn client with text in the loadscreen)
 				logMsh.Log(true)
-				mes := buildMessage(reqType, "An error occurred while warming the server: check the msh log")
+				mes := buildMessage(reqType, "An error occurred while warming the server: check the proxy log")
 				clientConn.Write(mes)
-				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+				errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 				return
 			}
@@ -165,7 +165,7 @@ func HandlerClientConn(clientConn net.Conn) {
 	default:
 		mes := buildMessage(reqType, "Client request unknown")
 		clientConn.Write(mes)
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 	}
 }
 
@@ -180,10 +180,10 @@ func openProxy(clientConn net.Conn, serverInitPacket []byte, req int) {
 	if err != nil {
 		errco.NewLogln(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_SERVER_DIAL, err.Error())
 
-		// msh JOIN response (warn client with text in the loadscreen)
+		// proxy JOIN response (warn client with text in the loadscreen)
 		mes := buildMessage(errco.CLIENT_REQ_JOIN, "can't connect to server... check if minecraft server is running and set the correct ServPort")
 		clientConn.Write(mes)
-		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+		errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 		return
 	}

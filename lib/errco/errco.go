@@ -41,9 +41,20 @@ const (
 	COLOR_CYAN   = "\033[36m"
 )
 
+var (
+	userLogPrefix string
+	userLogQuiet  bool
+)
+
 func init() {
 	// disable log.Ldate and log.Ltime flags: will be set manually
 	log.SetFlags(0)
+}
+
+// ConfigureUserLogging sets the plain output prefix and quiet mode flag used by Log.
+func ConfigureUserLogging(prefix string, quiet bool) {
+	userLogPrefix = prefix
+	userLogQuiet = quiet
 }
 
 // NewLog returns a new msh log object.
@@ -103,6 +114,10 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 	// make a copy of original log
 	logMod := *logMsh
 
+	if printPlainLog(&logMod) {
+		return logMsh
+	}
+
 	// -------- operations on copied log --------
 
 	var (
@@ -157,6 +172,45 @@ func (logMsh *MshLog) Log(tracing bool) *MshLog {
 
 	// return original log
 	return logMsh
+}
+
+func printPlainLog(logMod *MshLog) bool {
+	if userLogPrefix == "" {
+		return false
+	}
+
+	message := fmt.Sprintf(logMod.Mex, logMod.Arg...)
+
+	switch logMod.Typ {
+	case TYPE_INF:
+		if userLogQuiet && logMod.Lvl > LVL_1 {
+			return true
+		}
+		printPrefixed(message)
+	case TYPE_BYT:
+		if userLogQuiet {
+			return true
+		}
+		printPrefixed(message)
+	case TYPE_SER:
+		printPrefixed(StringGraphic(message))
+	case TYPE_WAR:
+		printPrefixed(fmt.Sprintf("[WARN] %s", message))
+	case TYPE_ERR:
+		printPrefixed(fmt.Sprintf("[ERROR] %s", message))
+	default:
+		printPrefixed(message)
+	}
+
+	return true
+}
+
+func printPrefixed(message string) {
+	if strings.HasSuffix(message, "\n") {
+		fmt.Printf("[%s] %s", userLogPrefix, message)
+	} else {
+		fmt.Printf("[%s] %s\n", userLogPrefix, message)
+	}
 }
 
 // AddTrace adds the caller function to the msh log trace

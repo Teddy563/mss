@@ -11,7 +11,7 @@ import (
 )
 
 func Test_QueryFull(t *testing.T) {
-	config.MshHost, config.MshPortQuery = "127.0.0.1", 25555
+	config.ProxyHost, config.ProxyPortQuery = "127.0.0.1", 25555
 
 	go HandlerQuery()
 
@@ -20,7 +20,7 @@ func Test_QueryFull(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		fmt.Println("--------------------")
 
-		res, err := minequery.QueryFull(config.MshHost, config.MshPortQuery)
+		res, err := minequery.QueryFull(config.ProxyHost, config.ProxyPortQuery)
 		if err != nil {
 			t.Fatalf(err.Error())
 		}
@@ -32,7 +32,7 @@ func Test_QueryFull(t *testing.T) {
 }
 
 func Test_QueryBasic(t *testing.T) {
-	config.MshHost, config.MshPortQuery = "127.0.0.1", 25555
+	config.ProxyHost, config.ProxyPortQuery = "127.0.0.1", 25555
 
 	go HandlerQuery()
 
@@ -41,7 +41,7 @@ func Test_QueryBasic(t *testing.T) {
 	for i := 0; i < 3; i++ {
 		fmt.Println("--------------------")
 
-		res, err := minequery.QueryBasic(config.MshHost, config.MshPortQuery)
+		res, err := minequery.QueryBasic(config.ProxyHost, config.ProxyPortQuery)
 		if err != nil {
 			t.Fatalf(err.Error())
 		}

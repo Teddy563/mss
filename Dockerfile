@@ -6,7 +6,7 @@
 
 FROM golang:1.25-bookworm AS build
 
-WORKDIR /msh
+WORKDIR /mineplus
 
 COPY go.mod ./
 COPY go.sum ./
@@ -15,7 +15,7 @@ RUN go mod download
 COPY *.go ./
 COPY lib/ ./lib/
 
-RUN go build -o /msh-docker
+RUN go build -o /mineplus-proxy
 
 ##
 ## Deploy
@@ -23,14 +23,14 @@ RUN go build -o /msh-docker
 
 FROM gcr.io/distroless/base-debian11
 
-WORKDIR /
+WORKDIR /app
 
-COPY README.md ./
-COPY msh-config.json ./
-COPY --from=build /msh-docker /msh-docker
+COPY README.md ./README.md
+COPY mineplus-config.json ./mineplus-config.json
+COPY --from=build /mineplus-proxy ./mineplus-proxy
 
 EXPOSE 25555
 
 USER nonroot:nonroot
 
-ENTRYPOINT ["/msh-docker"]
+ENTRYPOINT ["/app/mineplus-proxy"]

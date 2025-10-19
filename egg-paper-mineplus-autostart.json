@@ -1,0 +1,162 @@
+{
+    "_comment": "Mineplus Paper automatic start/stop egg",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2025-10-19T00:00:00+00:00",
+    "name": "Mineplus Paper Autostart",
+    "author": "mineplus@teddy563.dev",
+    "description": "High-performance Paper server with automatic start/stop handled by the Mineplus proxy wrapper.",
+    "features": [
+        "eula"
+    ],
+    "docker_images": {
+        "Java 21": "ghcr.io/pterodactyl/yolks:java_21",
+        "Java 17": "ghcr.io/pterodactyl/yolks:java_17",
+        "Java 17J9": "ghcr.io/pterodactyl/yolks:java_17J9",
+        "Java 16": "ghcr.io/pterodactyl/yolks:java_16",
+        "Java 16J9": "ghcr.io/pterodactyl/yolks:java_16J9",
+        "Java 11": "ghcr.io/pterodactyl/yolks:java_11",
+        "Java 11J9": "ghcr.io/pterodactyl/yolks:java_11J9",
+        "Java 8": "ghcr.io/pterodactyl/yolks:java_8",
+        "Java 8J9": "ghcr.io/pterodactyl/yolks:java_8J9"
+    },
+    "file_denylist": [],
+    "startup": "if [[ ${AUTO_START_STOP} -eq 0 ]]; then java {{JAVA_FLAGS}} -jar {{SERVER_JARFILE}} nogui; else ./mineplus-proxy -prefix Mineplus -quiet -port {{SERVER_PORT}} -d {{PROXY_DEBUG}} -file {{SERVER_JARFILE}} -allowkill {{FORCE_STOP_AFTER}} -timeout {{IDLE_SECONDS}} -suspendrefresh {{SUSPEND_REFRESH}} $( [[ ${WHITELIST_IMPORT} -eq 1 ]] && echo \" -wlimport\") $( [[ ${USE_PROCESS_SUSPEND} -eq 1 ]] && echo \" -suspendallow\" ); fi",
+    "config": {
+        "files": "{\n    \"mineplus-config.json\": {\n        \"parser\": \"json\",\n        \"find\": {\n            \"Server.FileName\": \"{{env.SERVER_JARFILE}}\",\n            \"Commands.StartServerParam\": \"-Xms256M -Xmx{{server.build.memory}}M\",\n            \"Auto.ProxyPort\": \"{{server.build.default.port}}\",\n            \"Auto.ProxyQueryPort\": \"{{server.build.default.port}}\"\n        }\n    },\n    \"server.properties\": {\n        \"parser\": \"properties\",\n        \"find\": {\n            \"server-ip\": \"0.0.0.0\",\n            \"server-port\": \"25565\"\n        }\n    }\n}",
+        "startup": "{\n    \"done\": \"proxy setup\"\n}",
+        "logs": "{}",
+        "stop": "^c"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/bash\n# Mineplus Paper installation script\n#\n# Server Files: /mnt/server\nset -euo pipefail\n\nPROJECT=paper\n\nif [ -n \"${DL_PATH}\" ]; then\n    echo -e \"Using supplied download url: ${DL_PATH}\"\n    DOWNLOAD_URL=$(eval echo $(echo ${DL_PATH} | sed -e 's/{{/${/g' -e 's/}}/}/g'))\nelse\n    VER_EXISTS=$(curl -s https://api.papermc.io/v2/projects/${PROJECT} | jq -r --arg VERSION \"${MINECRAFT_VERSION}\" '.versions[] | contains($VERSION)' | grep true || true)\n    LATEST_VERSION=$(curl -s https://api.papermc.io/v2/projects/${PROJECT} | jq -r '.versions | .[-1]')\n\n    if [[ \"${VER_EXISTS}\" == \"true\" ]]; then\n        echo -e \"Version is valid. Using version ${MINECRAFT_VERSION}\"\n    else\n        echo -e \"Using the latest ${PROJECT} version\"\n        MINECRAFT_VERSION=${LATEST_VERSION}\n    fi\n\n    BUILD_EXISTS=$(curl -s https://api.papermc.io/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r --arg BUILD \"${BUILD_NUMBER}\" '.builds[] | tostring | contains($BUILD)' | grep true || true)\n    LATEST_BUILD=$(curl -s https://api.papermc.io/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r '.builds | .[-1]')\n\n    if [[ \"${BUILD_EXISTS}\" == \"true\" ]]; then\n        echo -e \"Build is valid for version ${MINECRAFT_VERSION}. Using build ${BUILD_NUMBER}\"\n    else\n        echo -e \"Using the latest ${PROJECT} build for version ${MINECRAFT_VERSION}\"\n        BUILD_NUMBER=${LATEST_BUILD}\n    fi\n\n    JAR_NAME=${PROJECT}-${MINECRAFT_VERSION}-${BUILD_NUMBER}.jar\n    echo -e \"MC Version: ${MINECRAFT_VERSION}\"\n    echo -e \"Build: ${BUILD_NUMBER}\"\n    echo -e \"JAR Name of Build: ${JAR_NAME}\"\n    DOWNLOAD_URL=https://api.papermc.io/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION}/builds/${BUILD_NUMBER}/downloads/${JAR_NAME}\nfi\n\ncd /mnt/server\n\narch=$(uname -m)\ncase \"${arch}\" in\n  x86_64*)   MINEPLUS_BINARY=\"mineplus-linux-amd64\" ;;\n  aarch64*)  MINEPLUS_BINARY=\"mineplus-linux-arm64\" ;;\n  arm*)\n    echo \"Mineplus proxy does not support ARM (non aarch64) architectures.\"\n    exit 1\n    ;;\n  *)\n    echo \"Mineplus proxy: unsupported architecture ${arch}.\"\n    exit 1\n    ;;\nesac\n\nPROXY_URL=\"https://github.com/Teddy563/mss/releases/latest/download/${MINEPLUS_BINARY}\"\necho \"Downloading Mineplus proxy from ${PROXY_URL}\"\ncurl -sSL -f -o mineplus-proxy \"${PROXY_URL}\"\nchmod +x ./mineplus-proxy\n\nif [ -f \"${SERVER_JARFILE}\" ]; then\n    mv \"${SERVER_JARFILE}\" \"${SERVER_JARFILE}.old\"\nfi\n\necho -e \"Downloading Paper jar ${DOWNLOAD_URL}\"\ncurl -sSL -o \"${SERVER_JARFILE}\" \"${DOWNLOAD_URL}\"\n\nif [ ! -f server.properties ]; then\n    echo -e \"Downloading default server.properties\"\n    curl -sSL -o server.properties https://raw.githubusercontent.com/parkervcp/eggs/master/minecraft/java/server.properties\nfi\n\nif [ ! -f mineplus-config.json ]; then\n    echo -e \"Downloading Mineplus config template\"\n    curl -sSL -o mineplus-config.json https://raw.githubusercontent.com/Teddy563/mss/main/mineplus-config.json\nfi\n\ncat > /mnt/server/log4j2.xml <<'EOF'\n<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Configuration status=\"WARN\">\n  <Appenders>\n    <Console name=\"SysOut\" target=\"SYSTEM_OUT\">\n      <PatternLayout pattern=\"[Mineplus] %msg%n\"/>\n    </Console>\n  </Appenders>\n  <Loggers>\n    <Root level=\"info\">\n      <AppenderRef ref=\"SysOut\"/>\n    </Root>\n  </Loggers>\n</Configuration>\nEOF\n",
+            "container": "bash",
+            "entrypoint": "bash"
+        }
+    },
+    "variables": [
+        {
+            "name": "Server Jar",
+            "description": "The jar file to run when launching Paper.",
+            "env_variable": "SERVER_JARFILE",
+            "default_value": "server.jar",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:200",
+            "field_type": "text"
+        },
+        {
+            "name": "Minecraft Version",
+            "description": "Version of Paper to download. Leave blank to install the latest release.",
+            "env_variable": "MINECRAFT_VERSION",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "Build Number",
+            "description": "Optional Paper build number. Leave blank for the latest build.",
+            "env_variable": "BUILD_NUMBER",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "Custom Download URL",
+            "description": "Optional URL to download a custom server jar.",
+            "env_variable": "DL_PATH",
+            "default_value": "",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "nullable|string|max:300",
+            "field_type": "text"
+        },
+        {
+            "name": "Java Flags",
+            "description": "Flags used when running the server without the Mineplus proxy.",
+            "env_variable": "JAVA_FLAGS",
+            "default_value": "-Xms256M -Xmx{{SERVER_MEMORY}}M",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:200",
+            "field_type": "text"
+        },
+        {
+            "name": "Mineplus Debug Level",
+            "description": "Log level forwarded to the Mineplus proxy.",
+            "env_variable": "PROXY_DEBUG",
+            "default_value": "1",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|integer|between:0,4",
+            "field_type": "text"
+        },
+        {
+            "name": "Idle Timeout",
+            "description": "Seconds to wait without players before stopping the server.",
+            "env_variable": "IDLE_SECONDS",
+            "default_value": "30",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|integer|between:0,60000",
+            "field_type": "text"
+        },
+        {
+            "name": "Force Stop After (seconds)",
+            "description": "Seconds to wait before forcibly terminating the server on shutdown.",
+            "env_variable": "FORCE_STOP_AFTER",
+            "default_value": "10",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|integer|between:-1,60000",
+            "field_type": "text"
+        },
+        {
+            "name": "Enable Process Suspend",
+            "description": "When enabled the proxy suspends the server process instead of issuing /stop.",
+            "env_variable": "USE_PROCESS_SUSPEND",
+            "default_value": "0",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Suspend Refresh Seconds",
+            "description": "Interval (seconds) for resuming and re-suspending the server when process suspend is enabled.",
+            "env_variable": "SUSPEND_REFRESH",
+            "default_value": "-1",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|integer|between:-1,60000",
+            "field_type": "text"
+        },
+        {
+            "name": "Whitelist Import",
+            "description": "Import players from whitelist.json before allowing warm-up.",
+            "env_variable": "WHITELIST_IMPORT",
+            "default_value": "0",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|boolean",
+            "field_type": "text"
+        },
+        {
+            "name": "Auto Start/Stop",
+            "description": "Disable to run Java directly without the Mineplus proxy.",
+            "env_variable": "AUTO_START_STOP",
+            "default_value": "1",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|boolean",
+            "field_type": "text"
+        }
+    ]
+}

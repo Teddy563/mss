@@ -19,8 +19,8 @@ COMMIT COLLECTION
 */
 
 var (
-	MshVersion string = "v2.5.2"  // msh version
-	MshCommit  string = "-------" // msh commit
+	MshVersion string = "v2.5.2-mineplus" // mineplus proxy version
+	MshCommit  string = "mineplus"        // commit identifier placeholder
 
 	// msh program
 	msh *program = &program{
@@ -80,14 +80,14 @@ func MshMgr() {
 		}
 
 		// exit
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "exiting msh")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "exiting Mineplus proxy")
 		os.Exit(0)
 	}
 }
 
 // AutoTerminate induces correct msh termination via msh manager
 func AutoTerminate() {
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "issuing msh termination")
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_0, errco.ERROR_NIL, "issuing Mineplus proxy termination")
 	if msh.mgrActive {
 		// send signal to msh.sigExit so that msh manager handles msh termination
 		msh.sigExit <- syscall.SIGINT

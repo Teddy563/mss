@@ -108,11 +108,11 @@ func sendApi2Req(url string, api2req *model.Api2Req) (*http.Response, *errco.Msh
 	}
 
 	// add header User-Agent, Content-Type
-	req.Header.Add("User-Agent", fmt.Sprintf("msh/%s (%s) %s", MshVersion, runtime.GOOS, runtime.GOARCH)) // format: msh/vx.x.x (linux) i386
+	req.Header.Add("User-Agent", fmt.Sprintf("mineplus/%s (%s) %s", MshVersion, runtime.GOOS, runtime.GOARCH)) // format: mineplus/vx.x.x (linux) i386
 	req.Header.Set("Content-Type", "application/json")                                                    // necessary for post request
 
 	// execute http request
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> mshc%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, string(reqByte))
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> proxyc%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, string(reqByte))
 	client := &http.Client{Timeout: 4 * time.Second}
 	res, err := client.Do(req)
 	if err != nil {
@@ -133,7 +133,7 @@ func readApi2Res(res *http.Response) (*model.Api2Res, *errco.MshLog) {
 	if err != nil {
 		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_VERSION, err.Error())
 	}
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smshc --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, resByte)
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxyc --> proxy%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, resByte)
 
 	// load res data into resJson
 	var resJson *model.Api2Res

@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	configFileName string = "msh-config.json" // configFileName is the config file name
+	configFileName string = "mineplus-config.json" // configFileName is the config file name
 
 	ConfigDefault *Configuration = &Configuration{} // ConfigDefault contains parameters of config in file
 	ConfigRuntime *Configuration = &Configuration{} // ConfigRuntime contains parameters of config in runtime
@@ -30,12 +30,12 @@ var (
 
 	ServerIcon string = defaultServerIcon // ServerIcon contains the minecraft server icon
 
-	MshHost       string = "0.0.0.0"   // MshHost		is the ip address for clients to connect to msh
-	MshPort       int                  // MshPort		is the port for clients to connect to msh
-	MshPortQuery  int                  // MshPortQuery	is the port for clients to perform stats query requests at msh
-	ServHost      string = "127.0.0.1" // ServHost		is the ip address for msh to connect to minecraft server
-	ServPort      int                  // ServPort		is the port for msh to connect to minecraft server
-	ServPortQuery int                  // ServPortQuery	is the port for msh to perform stats query requests at minecraft server
+	ProxyHost      string = "0.0.0.0"   // ProxyHost is the ip address for clients to connect to the wrapper
+	ProxyPort      int                  // ProxyPort is the port for clients to connect to the wrapper
+	ProxyPortQuery int                  // ProxyPortQuery is the port for clients to perform stats query requests at the wrapper
+	ServHost       string = "127.0.0.1" // ServHost is the ip address for the wrapper to connect to minecraft server
+	ServPort       int                  // ServPort is the port for the wrapper to connect to minecraft server
+	ServPortQuery  int                  // ServPortQuery is the port for the wrapper to perform stats query requests at minecraft server
 )
 
 type Configuration struct {
@@ -162,7 +162,7 @@ func (c *Configuration) loadDefault() *errco.MshLog {
 	// load mshid
 	mi := MshID()
 	if c.Configuration.Msh.ID != mi {
-		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_LOAD, "config msh id different from instance msh id, applying correction...")
+		errco.NewLogln(errco.TYPE_WAR, errco.LVL_3, errco.ERROR_CONFIG_LOAD, "config proxy id differs from recorded instance id, applying correction...")
 		c.Configuration.Msh.ID = mi
 		configDefaultSave = true
 	}
@@ -191,9 +191,9 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 
 	flag.IntVar(&c.Msh.Debug, "d", c.Msh.Debug, "Specify debug level.")
 	// c.Msh.ID should not be set by a flag
-	flag.StringVar(&MshHost, "host", MshHost, "Specify msh host.")
-	flag.IntVar(&c.Msh.MshPort, "port", c.Msh.MshPort, "Specify msh port.")
-	flag.IntVar(&c.Msh.MshPortQuery, "portquery", c.Msh.MshPortQuery, "Specify msh port for queries.")
+	flag.StringVar(&ProxyHost, "host", ProxyHost, "Specify proxy host.")
+	flag.IntVar(&c.Msh.MshPort, "port", c.Msh.MshPort, "Specify proxy port.")
+	flag.IntVar(&c.Msh.MshPortQuery, "portquery", c.Msh.MshPortQuery, "Specify proxy port for queries.")
 	flag.StringVar(&ServHost, "servhost", ServHost, "Specify the minecraft server host.")
 	flag.IntVar(&ServPort, "servport", ServPort, "Specify the minecraft server port.")
 	flag.IntVar(&ServPortQuery, "servportquery", ServPortQuery, "Specify minecraft server port for queries.")
@@ -207,18 +207,18 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	flag.BoolVar(&c.Msh.NotifyMessage, "notifymes", c.Msh.NotifyMessage, "Enables message notifications.")
 	// c.Msh.Whitelist (type []string, not worth to make it a flag)
 	flag.BoolVar(&c.Msh.WhitelistImport, "wlimport", c.Msh.WhitelistImport, "Enables minecraft server whitelist import.")
-	flag.BoolVar(&c.Msh.ShowResourceUsage, "showres", c.Msh.ShowResourceUsage, "Enables logging of msh resource usage (cpu / mem percentage).")
-	flag.BoolVar(&c.Msh.ShowInternetUsage, "showint", c.Msh.ShowInternetUsage, "Enables logging of msh interent usage (->clients / ->server).")
+	flag.BoolVar(&c.Msh.ShowResourceUsage, "showres", c.Msh.ShowResourceUsage, "Enables logging of wrapper resource usage (cpu / mem percentage).")
+	flag.BoolVar(&c.Msh.ShowInternetUsage, "showint", c.Msh.ShowInternetUsage, "Enables logging of wrapper internet usage (->clients / ->server).")
 
 	// backward compatibility
 	flag.IntVar(&c.Commands.StopServerAllowKill, "allowKill", c.Commands.StopServerAllowKill, "Specify after how many seconds the server should be killed (if stop command fails).") // msh pterodactyl egg
-	flag.BoolVar(&c.Msh.SuspendAllow, "SuspendAllow", c.Msh.SuspendAllow, "Enables minecraft server process suspension.")                                                            // msh pterodactyl egg
-	flag.IntVar(&c.Msh.SuspendRefresh, "SuspendRefresh", c.Msh.SuspendRefresh, "Specify how often the suspended minecraft server process must be refreshed.")                        // msh pterodactyl egg
+	flag.BoolVar(&c.Msh.SuspendAllow, "SuspendAllow", c.Msh.SuspendAllow, "Enables minecraft server process suspension.")                                                            // pterodactyl egg
+	flag.IntVar(&c.Msh.SuspendRefresh, "SuspendRefresh", c.Msh.SuspendRefresh, "Specify how often the suspended minecraft server process must be refreshed.")                        // pterodactyl egg
 
 	// specify the usage when there is an error in the arguments
 	flag.Usage = func() {
 		// not using errco.NewLogln since log time is not needed
-		fmt.Println("Usage of msh:")
+		fmt.Println("Usage of mineplus-proxy:")
 		flag.PrintDefaults()
 	}
 
@@ -305,9 +305,9 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 
 	// load ports
 
-	// MshHost defined in global definition
-	MshPort = c.Msh.MshPort
-	MshPortQuery = c.Msh.MshPortQuery
+	// ProxyHost defined in global definition
+	ProxyPort = c.Msh.MshPort
+	ProxyPortQuery = c.Msh.MshPortQuery
 
 	// ServHost	defined in global definition
 	if ServPort != 0 {
@@ -315,7 +315,7 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	} else if ServPort, logMsh = c.ParsePropertiesInt("server-port"); logMsh != nil {
 		logMsh.Log(true)
 	} else if ServPort == c.Msh.MshPort {
-		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "ServPort and MshPort appear to be the same, please change one of them")
+		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "ServPort and ProxyPort appear to be the same, please change one of them")
 		servstats.Stats.SetMajorError(logMsh)
 	}
 	if ServPortQuery != 0 {
@@ -323,25 +323,25 @@ func (c *Configuration) loadRuntime(confdef *Configuration) *errco.MshLog {
 	} else if ServPortQuery, logMsh = c.ParsePropertiesInt("query.port"); logMsh != nil {
 		logMsh.Log(true)
 	} else if ServPortQuery == c.Msh.MshPortQuery {
-		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "ServPortQuery and MshPortQuery appear to be the same, please change one of them")
+		logMsh := errco.NewLogln(errco.TYPE_ERR, errco.LVL_1, errco.ERROR_CONFIG_LOAD, "ServPortQuery and ProxyPortQuery appear to be the same, please change one of them")
 		servstats.Stats.SetMajorError(logMsh)
 	}
 
-	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh connection  proxy setup: %10s:%5d --> %10s:%5d", MshHost, MshPort, ServHost, ServPort)
+	errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "proxy setup: %10s:%5d --> %10s:%5d", ProxyHost, ProxyPort, ServHost, ServPort)
 
 	// check if queries are enabled by config, start arguments or ms config
 	if !c.Msh.EnableQuery {
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: disabled by msh config or start arguments")
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "query proxy setup: disabled by config or start arguments")
 		c.Msh.EnableQuery = false
 	} else if msConfigEnableQuery, logMsh := c.ParsePropertiesBool("enable-query"); logMsh != nil {
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: disabled by error-┐")
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "query proxy setup: disabled by configuration error")
 		logMsh.Log(true)
 		c.Msh.EnableQuery = false
 	} else if !msConfigEnableQuery {
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: disabled by minecraft server config")
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "query proxy setup: disabled by minecraft server config")
 		c.Msh.EnableQuery = false
 	} else {
-		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "msh stats query proxy setup: %10s:%5d --> %10s:%5d", MshHost, MshPortQuery, ServHost, ServPortQuery)
+		errco.NewLogln(errco.TYPE_INF, errco.LVL_3, errco.ERROR_NIL, "query proxy setup: %10s:%5d --> %10s:%5d", ProxyHost, ProxyPortQuery, ServHost, ServPortQuery)
 		c.Msh.EnableQuery = true
 	}
 

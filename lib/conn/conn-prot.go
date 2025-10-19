@@ -108,9 +108,9 @@ func getReqType(clientConn net.Conn) ([]byte, int, *errco.MshLog) {
 	dataReqFull = data
 
 	// generate flags
-	MshPortByt := big.NewInt(int64(config.MshPort)).Bytes() // calculates listen port in BigEndian bytes
-	reqFlagInfo := append(MshPortByt, byte(1))              // flag contained in INFO request packet -> [99 211 1]
-	reqFlagJoin := append(MshPortByt, byte(2))              // flag contained in JOIN request packet -> [99 211 2]
+	ProxyPortByt := big.NewInt(int64(config.ProxyPort)).Bytes() // calculates listen port in BigEndian bytes
+	reqFlagInfo := append(ProxyPortByt, byte(1))              // flag contained in INFO request packet -> [99 211 1]
+	reqFlagJoin := append(ProxyPortByt, byte(2))              // flag contained in JOIN request packet -> [99 211 2]
 
 	// extract request type key byte
 	reqTypeKeyByte := byte(0)
@@ -123,7 +123,7 @@ func getReqType(clientConn net.Conn) ([]byte, int, *errco.MshLog) {
 		// client is requesting server info
 		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1 1 0 ]
 		//  ______________ case 1 _____________      ____________ case 2 ___________
-		// [ 16 ... x x x (MshPortBytes) 1 1 0 ] or [ 16 ... x x x (MshPortBytes) 1 ]
+		// [ 16 ... x x x (ProxyPortBytes) 1 1 0 ] or [ 16 ... x x x (ProxyPortBytes) 1 ]
 		// [              ^-reqFlagInfo--^     ]    [              ^-reqFlagInfo--^ ]
 		// [    ^-----------16 bytes-----^     ]    [    ^-----------16 bytes-----^ ]
 
@@ -133,7 +133,7 @@ func getReqType(clientConn net.Conn) ([]byte, int, *errco.MshLog) {
 		// client is trying to join the server
 		// example: [ 16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 2 ]
 		//  _______________________ case 1 ______________________      ________________________ case 2 ________________________
-		// [ 16 ... x x x (MshPortBytes) 2 x ... x (player name) ] or [ 16 ... x x x (MshPortBytes) 2 ][ x ... x (player name) ]
+		// [ 16 ... x x x (ProxyPortBytes) 2 x ... x (player name) ] or [ 16 ... x x x (ProxyPortBytes) 2 ][ x ... x (player name) ]
 		// [              ^-reqFlagJoin--^                       ]    [              ^-reqFlagJoin--^ ][                       ]
 		// [    ^-----------16 bytes-----^                       ]    [    ^-----------16 bytes-----^ ][                       ]
 
@@ -203,7 +203,7 @@ func getPing(clientConn net.Conn) *errco.MshLog {
 	// answer ping
 	clientConn.Write(pingData)
 
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> client%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, pingData)
 
 	return nil
 }
@@ -222,7 +222,7 @@ func getClientPacket(clientConn net.Conn) ([]byte, *errco.MshLog) {
 		return nil, errco.NewLog(errco.TYPE_ERR, errco.LVL_3, errco.ERROR_CLIENT_SOCKET_READ, err.Error())
 	}
 
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> msh%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sclient --> proxy%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, buf[:dataLen])
 
 	return buf[:dataLen], nil
 }

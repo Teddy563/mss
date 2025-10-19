@@ -1,196 +1,95 @@
-# Minecraft Server Hibernation  
+# Mineplus Autostart Proxy
 
-[![msh - loc](https://tokei.rs/b1/github/gekware/minecraft-server-hibernation)](https://github.com/gekware/minecraft-server-hibernation)
-[![msh - release](https://img.shields.io/github/release/gekware/minecraft-server-hibernation?color=05aefc)](https://github.com/gekware/minecraft-server-hibernation/releases)
-[![msh - goreport](https://goreportcard.com/badge/github.com/gekware/minecraft-server-hibernation)](https://goreportcard.com/report/github.com/gekware/minecraft-server-hibernation)
-[![msh - license](https://img.shields.io/github/license/gekware/minecraft-server-hibernation?color=6fff00)](https://github.com/gekware/minecraft-server-hibernation/blob/master/LICENSE)
-[![msh - stars](https://img.shields.io/github/stars/gekware/minecraft-server-hibernation?color=ffbd19)](https://github.com/gekware/minecraft-server-hibernation/stargazers)
+Mineplus is a lightweight proxy that keeps your Paper (or any Java edition) server dormant until a player connects. It sits in front of the Minecraft server, wakes it up on demand, and shuts it down again when the server is idle. The console output is flattened to `[Mineplus] message`, so Pterodactyl panels and log tailers stay clean.
 
-Avoid wasting resources by starting your Minecraft server automatically when a player joins and stopping it when no one is online  
-_(for vanilla/modded on linux/windows/macos)_  
+This repository also provides a ready-to-import Pterodactyl egg that bundles the proxy with Paper.
 
-<p align="center" >
-    <a href="https://github.com/gekware/minecraft-server-hibernation" >
-        <img src="https://raw.githubusercontent.com/gekware/minecraft-server-hibernation/c6a80ea835bea9f9a795c0805ab0e99ba326273c/res/icon/msh.png" >
-    </a>
-</p>
+## Highlights
 
-version: v2.5.0  
-Copyright (C) 2019-2023 [gekigek99](https://github.com/gekigek99)  
+- **On-demand start/stop** – keep the server offline when nobody is playing and automatically start it when a player joins.
+- **Clean console** – Mineplus rewrites its own logs and Paper’s Log4j output to a simple `[Mineplus]` prefix.
+- **Suspend or stop** – optionally suspend the Java process instead of issuing `/stop` for near instant resumes.
+- **Hidden egg controls** – the Pterodactyl egg exposes only standard Paper options; Mineplus tuning lives in hidden variables or the JSON template.
 
-Join our [discord server](https://discord.com/invite/guKB6ETeMF)!  
+## Quick Start (Standalone)
 
------
-### RELEASES:
-Download the latest **releases** on [github](https://github.com/gekware/minecraft-server-hibernation/releases) (for linux, windows and macos)  
+1. Install Go 1.21+.
+2. Clone the repository and build the proxy:
+   ```shell
+   go build -o mineplus-proxy .
+   ```
+3. Copy `mineplus-config.json` next to the proxy binary and adjust the paths/ports.
+4. Run Mineplus:
+   ```shell
+   ./mineplus-proxy -prefix Mineplus -quiet
+   ```
+   Use `-quiet=false` to see the detailed debug output.
 
-_You can download msh from [gekware](https://msh.gekware.net/) or [compile the dev branch](#PROGRAM-COMPILATION) to use a more recent version, but note that it may still need to be tested_
+## Configuration
 
------
-### PROGRAM COMPILATION:
-This version was successfully compiled in go version 1.19  
-Compilation procedure:
-```command
-git clone https://github.com/gekware/minecraft-server-hibernation.git  
-cd minecraft-server-hibernation/  
-git submodule update --init
-git checkout dev # execute only if you want to compile the dev branch
-go build .
-```
+The proxy looks for `mineplus-config.json`. The JSON structure mirrors the original MSH config but the sections and keys are renamed so that any branding is removed.
 
------
-### INSTRUCTIONS:
-1. Install the Minecraft server you want
-2. Edit `msh-config.json` as needed (*check definitions*):
-    - Folder
-    - FileName
-    - StartServerParam
-    - StopServer
-	- Whitelist
-    - \* TimeBeforeStoppingEmptyServer
-    - \* [others...](#DEFINITIONS)
-3. \* put the frozen icon you want in `path/to/server.jar/folder` (must be called `server-icon-frozen`, supported formats: `.png`, `.jpg`)
-4. on the router (to which the server is connected): forward port 25555 to server ([tutorial](https://www.wikihow.com/Open-Ports#Opening-Router-Firewall-Ports))
-5. on the server: open port 25555 (example: [ufw firewall](https://www.configserverfirewall.com/ufw-ubuntu-firewall/ubuntu-firewall-open-port/))
-6. run the msh executable
-7. You can connect to the server using the port from the configuration file (default 25555).
-
-_\* = it's not compulsory to modify this parameter_
-
-#### notes
-- _`msh-config.json` is not generated automatically. You will need to download it from the [releases](https://github.com/gekware/minecraft-server-hibernation/releases)._
-- _Automatically run msh at reboot._
-- _In `server.properties` set `server-ip=0.0.0.0` to avoid errors when msh tries to connect to the minecraft server._
-- _You must remove all braces from `msh-config.json`._  
-
------
-### DEFINITIONS:
-- _Some of these parameters can be configured with command-line arguments (`msh --help` to know more) (user supplied arguments will override config)_  
-
-Location of server folder and executable. You can find protocol/version [here](https://wiki.vg/Protocol_version_numbers) (but msh should set them automatically):
-```yaml
-"Server": {
-  "Folder": "{path/to/server/folder}"
-  "FileName": "{server.jar}"
-  "Version": "1.19.2"
-  "Protocol": 760
+```jsonc
+{
+  "Server": {
+    "Folder": "/path/to/paper",
+    "FileName": "server.jar",
+    "Version": "1.21.4",
+    "Protocol": 767
+  },
+  "Commands": {
+    "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui",
+    "StartServerParam": "-Xms1024M -Xmx1024M",
+    "StopServer": "stop",
+    "StopServerAllowKill": 10
+  },
+  "Auto": {
+    "LogLevel": 1,
+    "InstanceID": "",
+    "ProxyPort": 25555,
+    "ProxyQueryPort": 25555,
+    "EnableQuery": true,
+    "IdleTimeout": 30,
+    "UseSuspend": false,
+    "SuspendRefreshSeconds": -1,
+    "InfoIdle": "                   \\u00a7fserver status:\\n                   \\u00a7b\\u00a7lSTANDBY",
+    "InfoWarming": "                   \\u00a7fserver status:\\n                    \\u00a76\\u00a7lWARMING UP",
+    "NotifyUpdate": true,
+    "NotifyMessage": true,
+    "Whitelist": [],
+    "WhitelistImport": false,
+    "ShowResourceUsage": false,
+    "ShowInternetUsage": false
+  }
 }
 ```
 
-Commands to start and stop minecraft server  
-_StopServerAllowKill allows to kill the server after a certain amount of time (in seconds) when it's not responding_
-```yaml
-"Commands": {
-  "StartServer": "java <Commands.StartServerParam> -jar <Server.FileName> nogui"
-  "StartServerParam": "-Xmx1024M -Xms1024M"
-  "StopServer": "stop"
-  "StopServerAllowKill": 10	# set to -1 to disable
-}
+### Flags
+
+- `-prefix Mineplus` – text printed before every log line (`[Mineplus] …`).  
+- `-quiet` – suppress wrapper INFO/BYTE logs (error and Paper logs are always shown).  
+- `-port`, `-timeout`, `-suspendallow`, `-suspendrefresh`, etc. map 1:1 to the configuration file and remain compatible with the original CLI.
+
+## Pterodactyl Egg
+
+- JSON file: `egg-paper-mineplus-autostart.json`
+- Imports as **Mineplus Paper Autostart**
+- Hidden variables keep the idle timeout, suspend settings, and debug level locked. Change them in the JSON before importing if you need different defaults.
+- The installer downloads the corresponding Mineplus binary from the releases of this fork and generates a `log4j2.xml` that forces the `[Mineplus] %msg` pattern.
+
+Refer to [EGG-README.md](EGG-README.md) for the panel specific walkthrough.
+
+## Building Releases
+
+Mineplus ships binaries for Linux x86_64 and arm64. To create them locally:
+
+```shell
+GOOS=linux GOARCH=amd64 go build -o releases/mineplus-linux-amd64 .
+GOOS=linux GOARCH=arm64 go build -o releases/mineplus-linux-arm64 .
 ```
 
-Set the logging level for debug purposes
-```yaml
-"Debug": 1
-# 0 - NONE: no log
-# 1 - BASE: basic log
-# 2 - SERV: minecraft server log
-# 3 - DEVE: developement log
-# 4 - BYTE: connection bytes log
-```
+Upload the two files to a GitHub release so the egg installer can fetch them.
 
-Ports configuration
-- _MshPort and MshPortQuery must be different from the respective ones in `server.properties`_
-- _query handling is enabled if `EnableQuery: true` in `msh-config.json` AND `enable-query=true` in `server.properties`_
-```yaml
-"MshPort": 25555		# port to which players can join
-"MshPortQuery": 25555	# port to which stats query requests are performed from clients
-"EnableQuery": true		# enable query handling
-```
+## Credits & License
 
-TimeBeforeStoppingEmptyServer sets the time (after the last player disconnected) that msh waits before hibernating the minecraft server
-```yaml
-"TimeBeforeStoppingEmptyServer": 30
-```
-
-SuspendAllow enables msh to suspend minecraft server process when there are no players online  
-_To mitigate ram usage you can set a high swappiness (on linux)_  
-- pro:  player wait time to join frozen server is ~0  
-- cons: ram usage as minecraft server without msh (cpu remains ~0)  
-
-SuspendRefresh enables refresh of minecraft server suspension every set seconds (to avoid watchdog crash at unsuspension)  
-- setting `these variables` and `SuspendRefresh` might prevent minecraft server watchdog crash when `SuspendAllow` is enabled  
-
-|       file        |                       variable                       |
-| ----------------- | ---------------------------------------------------- |
-| server.properties | `max-tick-time= -1`                                  |
-| spigot.yml        | `timeout-time: -1`, `restart-on-crash: false`        |
-| bukkit.yml        | `warn-on-overload: false`                            |
-| paper-global.yml  | `early-warning-delay: -1`, `early-warning-every: -1` |
-
-```yaml
-"SuspendAllow": false
-"SuspendRefresh": -1	# set -1 to disable, advised value: 120 (reduce if minecraft server keeps crashing)
-```
-
-Hibernation and Starting server description
-```yaml
-"InfoHibernation": "                   §fserver status:\n                   §b§lHIBERNATING"
-"InfoStarting": "                   §fserver status:\n                    §6§lWARMING UP"
-```
-
-Set to false if you don't want notifications (every 20 minutes)
-```yaml
-"NotifyUpdate": true
-"NotifyMessage": true
-```
-
-Whitelist contains IPs and player names that are allowed to start the server (leave empty to allow everyone)  
-WhitelistImport adds `whitelist.json` to player names that are allowed to start the server  
-_unknown clients are not allowed to start the server, but can join_  
-```yaml
-"Whitelist": ["127.0.0.1", "gekigek99"]
-"WhitelistImport": false
-```
-
-ShowResourceUsage enables the logging of the msh tree process cpu/ram usage percent  
-_for debug purposes (debug level 3 required)_
-```yaml
-"ShowResourceUsage": false
-```
-
-ShowInternetUsage enables the logging of the msh connection usage  
-_for debug purposes (debug level 3 required)_
-```yaml
-"ShowInternetUsage": false
-```
-
------
-### CREDITS:  
-
-Author: [gekigek99](https://github.com/gekigek99)  
-
-Contributors: [najtin](https://github.com/najtin), [f8ith](https://github.com/f8ith), [Br31zh](https://github.com/Br31zh), [someotherotherguy](https://github.com/someotherotherguy), [navidmafi](https://github.com/navidmafi), [cromefire](https://github.com/cromefire), [andreblanke](https://github.com/andreblanke), [KyleGospo](https://github.com/KyleGospo), [A-wels](https://github.com/A-wels), [dxomg](https://github.com/dxomg)  
-
-Docker branch (outdated): [lubocode](https://github.com/lubocode/minecraft-server-hibernation)  
-
-Pterodactyl egg: [BolverBlitz](https://github.com/gekware/minecraft-server-hibernation-pterodactyl-egg)  
-
-_If you wish to contribute, please create a pull request using the dev branch as the base for your changes_
-
------
-
-<p align="center" >
-    <a href="https://www.buymeacoffee.com/gekigek99" >
-        <img src="https://raw.githubusercontent.com/gekware/minecraft-server-hibernation/c6a80ea835bea9f9a795c0805ab0e99ba326273c/res/icon/buymeacoffee.png" >
-    </a>
-</p>
-
-<h4 align="center" >
-    Give a star to this repository on <a href="https://github.com/gekware/minecraft-server-hibernation" > github</a>!
-</h4>
-
-<p align="center" >
-    <a href="https://github.com/gekware/minecraft-server-hibernation/stargazers" >
-        <img src="https://reporoster.com/stars/gekware/minecraft-server-hibernation" >
-    </a>
-</p>
+Mineplus is a heavily rebranded fork of [gekware/minecraft-server-hibernation](https://github.com/gekware/minecraft-server-hibernation) (originally by @gekigek99). The project remains licensed under the GPL-3.0; please review `LICENSE` for full terms and retain the appropriate notices when redistributing.

@@ -125,12 +125,12 @@ func getServInfo() (*model.DataInfo, *errco.MshLog) {
 	// [16 0 244 5 9 49 50 55 46 48 46 48 46 49 99 211 1 1 0 ]
 	//                                          └port┘ └info┘
 	reqInfoMessage := bytes.NewBuffer([]byte{16, 0, 244, 5, 9, 49, 50, 55, 46, 48, 46, 48, 46, 49})
-	reqInfoMessage.Write(big.NewInt(int64(config.MshPort)).Bytes())
+	reqInfoMessage.Write(big.NewInt(int64(config.ProxyPort)).Bytes())
 	reqInfoMessage.Write([]byte{1, 1, 0})
 
 	mes := reqInfoMessage.Bytes()
 	serverSocket.Write(mes)
-	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%smsh --> server%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
+	errco.NewLogln(errco.TYPE_BYT, errco.LVL_4, errco.ERROR_NIL, "%sproxy --> server%s: %v", errco.COLOR_PURPLE, errco.COLOR_RESET, mes)
 
 	// read response from server
 	for {

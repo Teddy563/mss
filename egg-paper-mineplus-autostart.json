@@ -23,7 +23,7 @@
         "Java 8J9": "ghcr.io/pterodactyl/yolks:java_8J9"
     },
     "file_denylist": [],
-    "startup": "/bin/bash -c 'if [ ! -f ./mineplus-start.sh ]; then cat <<\"EOF\" > ./mineplus-start.sh\n#!/bin/bash\nset -euo pipefail\n\nJAVA_FLAGS_RESOLVED=${JAVA_FLAGS//\\{\\{SERVER_MEMORY\\}\\}/${SERVER_MEMORY}}\n\nif [[ ${AUTO_START_STOP:-1} -eq 0 ]]; then\n  exec java ${JAVA_FLAGS_RESOLVED} -jar \"${SERVER_JARFILE}\" nogui\nfi\n\nargs=(\n  \"./mineplus-proxy\"\n  \"-prefix\" \"Mineplus\"\n  \"-quiet\"\n  \"-port\" \"${SERVER_PORT}\"\n  \"-d\" \"${PROXY_DEBUG}\"\n  \"-file\" \"${SERVER_JARFILE}\"\n  \"-allowkill\" \"${FORCE_STOP_AFTER}\"\n  \"-timeout\" \"${IDLE_SECONDS}\"\n  \"-suspendrefresh\" \"${SUSPEND_REFRESH}\"\n)\n\nif [[ ${WHITELIST_IMPORT:-0} -eq 1 ]]; then\n  args+=(\"-wlimport\")\nfi\n\nif [[ ${USE_PROCESS_SUSPEND:-0} -eq 1 ]]; then\n  args+=(\"-suspendallow\")\nfi\n\nexec \"${args[@]}\"\nEOF\nchmod +x ./mineplus-start.sh; fi; exec ./mineplus-start.sh'",
+    "startup": "./mineplus-start.sh",
     "config": {
         "files": "{\n    \"mineplus-config.json\": {\n        \"parser\": \"json\",\n        \"find\": {\n            \"Server.FileName\": \"{{env.SERVER_JARFILE}}\",\n            \"Commands.StartServerParam\": \"-Xms256M -Xmx{{server.build.memory}}M\",\n            \"Auto.ProxyPort\": \"{{server.build.default.port}}\",\n            \"Auto.ProxyQueryPort\": \"{{server.build.default.port}}\"\n        }\n    },\n    \"server.properties\": {\n        \"parser\": \"properties\",\n        \"find\": {\n            \"server-ip\": \"0.0.0.0\",\n            \"server-port\": \"25565\"\n        }\n    }\n}",
         "startup": "{\n    \"done\": \"proxy setup\"\n}",

@@ -19,15 +19,15 @@ var (
 )
 
 func main() {
-	flag.Parse()
-	errco.ConfigureUserLogging(*logPrefix, *quiet)
-
 	// load configuration from mineplus config file
 	logMsh := config.LoadConfig()
 	if logMsh != nil {
 		logMsh.Log(true)
 		progmgr.AutoTerminate()
 	}
+
+	// configure logging prefix after flags have been parsed by config.LoadConfig
+	errco.ConfigureUserLogging(*logPrefix, *quiet)
 
 	// launch wrapper manager
 	go progmgr.MshMgr()
